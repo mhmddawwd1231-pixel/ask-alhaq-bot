@@ -1,6 +1,3 @@
-
-Copy
-
 from flask import Flask, render_template_string, request, jsonify
 import requests
 import os
@@ -1220,77 +1217,25 @@ def search_web_advanced(query):
         return None, []
 
 def call_groq_with_search(user_message):
-    """استدعاء Groq مع البحث في الويب"""
-    api_key = os.environ.get('GROQ_API_KEY', '')
-    if not api_key:
-        return None, 'مفتاح GROQ_API_KEY غير موجود', False, []
-    
-    current_date = datetime.now().strftime("%Y-%m-%d %H:%M")
+    """البحث في DuckDuckGo فقط - بدون Groq"""
     
     print(f"🔍 جاري البحث عن: {user_message}")
     search_results, sources = search_web_advanced(user_message)
     
-    searched = bool(search_results)
-    
     if search_results:
         print(f"✅ تم العثور على {len(sources)} نتيجة بحث")
-        print(f"📄 أول 100 حرف من النتائج: {search_results[:100]}...")
-    else:
-        print("⚠️ لم يتم العثور على نتائج بحث - سيجيب Groq من معرفته")
-    
-    if search_results:
-        system_prompt = f'''أنت اسأل الحق - بوت ذكي وسريع ومتصل بالإنترنت. التاريخ والوقت الحالي: {current_date}
-
-📊 معلومات حديثة من البحث على الويب:
-{search_results}
-
-تعليمات مهمة:
-1. استخدم المعلومات من البحث للإجابة بدقة
-2. اذكر أحدث المعلومات والتواريخ إذا كانت متوفرة
-3. كن واضحاً ومباشراً ومختصراً
-4. أجب بالعربية الفصحى الواضحة
-5. إذا كانت المعلومات غير كافية، قل ذلك بصراحة
-
-تذكر: أنت متصل بالإنترنت وتعطي معلومات حديثة وموثوقة.'''
-    else:
-        system_prompt = f'''أنت اسأل الحق - بوت ذكي وسريع. التاريخ والوقت الحالي: {current_date}
-
-تجيب على الأسئلة بالعربية بطريقة واضحة ومختصرة ومفيدة.'''
-    
-    headers = {
-        'Content-Type': 'application/json',
-        'Authorization': f'Bearer {api_key}'
-    }
-    
-    payload = {
-        'model': 'llama-3.3-70b-versatile',
-        'messages': [
-            {'role': 'system', 'content': system_prompt},
-            {'role': 'user', 'content': user_message}
-        ],
-        'temperature': 0.7,
-        'max_tokens': 2000
-    }
-    
-    try:
-        response = requests.post(
-            'https://api.groq.com/openai/v1/chat/completions',
-            headers=headers,
-            json=payload,
-            timeout=30
-        )
         
-        if response.status_code == 200:
-            result = response.json()
-            answer = result['choices'][0]['message']['content']
-            print(f"✅ تم الحصول على الرد {'مع البحث' if searched else 'بدون بحث'}")
-            return answer, None, searched, sources
-        else:
-            return None, f'خطأ: {response.status_code}', False, []
-    except Exception as e:
-        return None, f'خطأ: {str(e)}', False, []
+        # تنسيق النتائج بشكل جميل
+        formatted_response = f"""📊 **نتائج البحث من DuckDuckGo:**
 
-@app.route('/api/chat', methods=['POST'])
+{search_results}"""
+        
+        return formatted_response, None, True, sources
+    else:
+        print("⚠️ لم يتم العثور على نتائج")
+        return "عذراً، لم أتمكن من العثور على نتائج لسؤالك. يرجى المحاولة مرة أخرى بصياغة مختلفة.", None, False, []
+
+def call_groq_with_search(user_message):@app.route('/api/chat', methods=['POST'])
 def chat():
     try:
         data = request.json
