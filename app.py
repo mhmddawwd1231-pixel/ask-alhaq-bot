@@ -1143,14 +1143,12 @@ HTML_TEMPLATE = '''
 def search_web_advanced(query):
     """بحث متقدم باستخدام DuckDuckGo و SerpAPI"""
     try:
-        print(f"🔎 محاولة البحث في DuckDuckGo عن: {query}")
         search_url = f"https://html.duckduckgo.com/html/?q={quote(query)}"
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         }
         
-        response = requests.get(search_url, headers=headers, timeout=15)
-        print(f"📡 DuckDuckGo status: {response.status_code}")
+        response = requests.get(search_url, headers=headers, timeout=10)
         
         if response.status_code == 200:
             from bs4 import BeautifulSoup
@@ -1174,14 +1172,8 @@ def search_web_advanced(query):
                     })
             
             if results:
-                print(f"✅ DuckDuckGo: وجدت {len(results)} نتائج")
                 return '\n\n'.join(results), sources
-            else:
-                print("⚠️ DuckDuckGo: لم توجد نتائج في HTML")
-        else:
-            print(f"❌ DuckDuckGo HTML فشل: {response.status_code}")
         
-        print("🔄 محاولة Brave Search...")
         brave_url = "https://api.search.brave.com/res/v1/web/search"
         params = {
             'q': query,
@@ -1217,25 +1209,71 @@ def search_web_advanced(query):
         return None, []
 
 def call_groq_with_search(user_message):
-    """البحث في DuckDuckGo فقط - بدون Groq"""
+    """استدعاء Groq مع البحث في الويب"""
+    api_key = os.environ.get('GROQ_API_KEY', '')
+    if not api_key:
+        return None, 'مفتاح GROQ_API_KEY غير موجود', False, []
+    
+    current_date = datetime.now().strftime("%Y-%m-%d %H:%M")
     
     print(f"🔍 جاري البحث عن: {user_message}")
     search_results, sources = search_web_advanced(user_message)
     
+    searched = bool(search_results)
+    
     if search_results:
-        print(f"✅ تم العثور على {len(sources)} نتيجة بحث")
-        
-        # تنسيق النتائج بشكل جميل
-        formatted_response = f"""📊 **نتائج البحث من DuckDuckGo:**
+        system_prompt = f'''أنت اسأل الحق - بوت ذكي وسريع ومتصل بالإنترنت. التاريخ والوقت الحالي: {current_date}
 
-{search_results}"""
-        
-        return formatted_response, None, True, sources
+📊 معلومات حديثة من البحث على الويب:
+{search_results}
+
+تعليمات مهمة:
+1. استخدم المعلومات من البحث للإجابة بدقة
+2. اذكر أحدث المعلومات والتواريخ إذا كانت متوفرة
+3. كن واضحاً ومباشراً ومختصراً
+4. أجب بالعربية الفصحى الواضحة
+5. إذا كانت المعلومات غير كافية، قل ذلك بصراحة
+
+تذكر: أنت متصل بالإنترنت وتعطي معلومات حديثة وموثوقة.'''
     else:
-        print("⚠️ لم يتم العثور على نتائج")
-        return "عذراً، لم أتمكن من العثور على نتائج لسؤالك. يرجى المحاولة مرة أخرى بصياغة مختلفة.", None, False, []
+        system_prompt = f'''أنت اسأل الحق - بوت ذكي وسريع. التاريخ والوقت الحالي: {current_date}
 
-def call_groq_with_search(user_message):@app.route('/api/chat', methods=['POST'])
+تجيب على الأسئلة بالعربية بطريقة واضحة ومختصرة ومفيدة.'''
+    
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': f'Bearer {api_key}'
+    }
+    
+    payload = {
+        'model': 'llama-3.3-70b-versatile',
+        'messages': [
+            {'role': 'system', 'content': system_prompt},
+            {'role': 'user', 'content': user_message}
+        ],
+        'temperature': 0.7,
+        'max_tokens': 2000
+    }
+    
+    try:
+        response = requests.post(
+            'https://api.groq.com/openai/v1/chat/completions',
+            headers=headers,
+            json=payload,
+            timeout=30
+        )
+        
+        if response.status_code == 200:
+            result = response.json()
+            answer = result['choices'][0]['message']['content']
+            print(f"✅ تم الحصول على الرد {'مع البحث' if searched else 'بدون بحث'}")
+            return answer, None, searched, sources
+        else:
+            return None, f'خطأ: {response.status_code}', False, []
+    except Exception as e:
+        return None, f'خطأ: {str(e)}', False, []
+
+@app.route('/api/chat', methods=['POST'])
 def chat():
     try:
         data = request.json
