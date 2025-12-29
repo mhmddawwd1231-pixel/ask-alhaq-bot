@@ -1,3 +1,6 @@
+
+Copy
+
 from flask import Flask, render_template_string, request, jsonify
 import requests
 import os
@@ -1143,12 +1146,14 @@ HTML_TEMPLATE = '''
 def search_web_advanced(query):
     """بحث متقدم باستخدام DuckDuckGo و SerpAPI"""
     try:
+        print(f"🔎 محاولة البحث في DuckDuckGo عن: {query}")
         search_url = f"https://html.duckduckgo.com/html/?q={quote(query)}"
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
         }
         
-        response = requests.get(search_url, headers=headers, timeout=10)
+        response = requests.get(search_url, headers=headers, timeout=15)
+        print(f"📡 DuckDuckGo status: {response.status_code}")
         
         if response.status_code == 200:
             from bs4 import BeautifulSoup
@@ -1172,8 +1177,14 @@ def search_web_advanced(query):
                     })
             
             if results:
+                print(f"✅ DuckDuckGo: وجدت {len(results)} نتائج")
                 return '\n\n'.join(results), sources
+            else:
+                print("⚠️ DuckDuckGo: لم توجد نتائج في HTML")
+        else:
+            print(f"❌ DuckDuckGo HTML فشل: {response.status_code}")
         
+        print("🔄 محاولة Brave Search...")
         brave_url = "https://api.search.brave.com/res/v1/web/search"
         params = {
             'q': query,
@@ -1220,6 +1231,12 @@ def call_groq_with_search(user_message):
     search_results, sources = search_web_advanced(user_message)
     
     searched = bool(search_results)
+    
+    if search_results:
+        print(f"✅ تم العثور على {len(sources)} نتيجة بحث")
+        print(f"📄 أول 100 حرف من النتائج: {search_results[:100]}...")
+    else:
+        print("⚠️ لم يتم العثور على نتائج بحث - سيجيب Groq من معرفته")
     
     if search_results:
         system_prompt = f'''أنت اسأل الحق - بوت ذكي وسريع ومتصل بالإنترنت. التاريخ والوقت الحالي: {current_date}
