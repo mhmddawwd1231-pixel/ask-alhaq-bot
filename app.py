@@ -7,7 +7,7 @@ import json
 from urllib.parse import quote
 
 load_dotenv()
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static')
 
 # HTML Template مخصص
 HTML_TEMPLATE = '''
@@ -1215,5 +1215,4 @@ if __name__ == '__main__':
         os.system('pip install beautifulsoup4 --quiet')
         print("✅ تم التثبيت!")
     
-    port = int(os.environ.get('PORT', 5000))
-    app.run(debug=False, host='0.0.0.0', port=port)
+    app.run(debug=True, host='0.0.0.0', port=5000)
