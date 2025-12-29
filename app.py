@@ -4,10 +4,11 @@ import os
 from dotenv import load_dotenv
 from datetime import datetime
 import json
+import json
 from urllib.parse import quote
 
 load_dotenv()
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static')
 
 # HTML Template مخصص
 HTML_TEMPLATE = '''
@@ -447,6 +448,9 @@ HTML_TEMPLATE = '''
         
         .input-container {
             padding: 20px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
             transition: all 0.3s ease;
         }
         
@@ -460,7 +464,7 @@ HTML_TEMPLATE = '''
             background: #18181B;
         }
         
-        .input-wrapper {
+        .buttons-row {
             display: flex;
             gap: 12px;
             align-items: center;
@@ -511,6 +515,7 @@ HTML_TEMPLATE = '''
         }
         
         .send-button, .clear-button {
+            flex: 1;
             padding: 16px 28px;
             border-radius: 16px;
             border: none;
@@ -519,6 +524,7 @@ HTML_TEMPLATE = '''
             transition: all 0.3s;
             font-size: 15px;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-width: 120px;
         }
         
         .light-mode .send-button {
@@ -731,18 +737,27 @@ HTML_TEMPLATE = '''
         }
         
         @media (max-width: 768px) {
-            .header-content {
-                flex-direction: column;
-                gap: 16px;
-            }
-            
-            .message-content {
-                max-width: 85%;
-            }
-            
-            .quick-questions {
-                grid-template-columns: 1fr;
-            }
+            .chat-container { padding: 10px; }
+            .header { padding: 14px; margin-bottom: 12px; border-radius: 16px; }
+            .header-content { flex-direction: column; gap: 12px; }
+            .header-left { flex-direction: row; gap: 12px; width: 100%; align-items: center; }
+            .icon-container { padding: 8px; border-radius: 10px; }
+            .logo-img { width: 45px; height: 45px; }
+            .title { font-size: 20px; }
+            .subtitle { font-size: 11px; }
+            .badges { display: flex; justify-content: flex-end; align-items: center; width: 100%; gap: 8px; }
+            .new-chat-button { padding: 8px 14px; font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 5px; background: white; color: #B90000; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); white-space: nowrap; }
+            .theme-toggle { padding: 8px; font-size: 18px; min-width: 44px; min-height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+            .messages { padding: 12px; }
+            .message { margin-bottom: 10px; }
+            .message-icon { width: 32px; height: 32px; font-size: 16px; min-width: 32px; }
+            .message-content { max-width: 80%; padding: 10px 14px; font-size: 13px; line-height: 1.5; }
+            .quick-questions { grid-template-columns: 1fr; gap: 8px; padding: 12px; }
+            .quick-question { padding: 10px 14px; font-size: 13px; border-radius: 10px; }
+            .input-container { padding: 12px; gap: 10px; border-radius: 16px; flex-direction: column; }
+            #messageInput { padding: 12px 16px; font-size: 15px; border-radius: 12px; width: 100%; }
+            .buttons-row { display: flex; gap: 10px; width: 100%; }
+            .send-button, .clear-button { flex: 1; padding: 14px 20px; font-size: 15px; border-radius: 12px; font-weight: 600; min-height: 48px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
         }
     </style>
 </head>
@@ -811,14 +826,14 @@ HTML_TEMPLATE = '''
             </div>
             
             <div class="input-container">
-                <div class="input-wrapper">
-                    <input 
-                        type="text" 
-                        id="messageInput" 
-                        class="input-field" 
-                        placeholder="اسأل عن أي شيء ..."
-                        onkeypress="handleKeyPress(event)"
-                    >
+                <input 
+                    type="text" 
+                    id="messageInput" 
+                    class="input-field" 
+                    placeholder="اسأل عن أي شيء ..."
+                    onkeypress="handleKeyPress(event)"
+                >
+                <div class="buttons-row">
                     <button class="send-button" onclick="sendMessage()" id="sendButton">
                         إرسال
                     </button>
@@ -1008,73 +1023,96 @@ HTML_TEMPLATE = '''
 '''
 
 def search_web_advanced(query):
-    """بحث متقدم باستخدام DuckDuckGo و SerpAPI"""
+    """بحث ذكي متعدد المصادر"""
+    results = []
+    sources = []
+    
     try:
-        search_url = f"https://html.duckduckgo.com/html/?q={quote(query)}"
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        # طريقة 1: Wikipedia API (موثوق ومجاني 100%)
+        import json
+        wiki_url = "https://ar.wikipedia.org/w/api.php"
+        wiki_params = {
+            'action': 'query',
+            'format': 'json',
+            'list': 'search',
+            'srsearch': query,
+            'srlimit': 3,
+            'utf8': 1
         }
         
-        response = requests.get(search_url, headers=headers, timeout=10)
-        
-        if response.status_code == 200:
-            from bs4 import BeautifulSoup
-            soup = BeautifulSoup(response.text, 'html.parser')
-            results = []
-            sources = []
-            
-            for result in soup.find_all('div', class_='result', limit=5):
-                title_tag = result.find('a', class_='result__a')
-                snippet_tag = result.find('a', class_='result__snippet')
-                
-                if title_tag and snippet_tag:
-                    title = title_tag.get_text(strip=True)
-                    snippet = snippet_tag.get_text(strip=True)
-                    url = title_tag.get('href', '')
-                    
-                    results.append(f"• **{title}**\n  {snippet}")
-                    sources.append({
-                        'title': title[:50] + '...' if len(title) > 50 else title,
-                        'url': url
-                    })
-            
-            if results:
-                return '\n\n'.join(results), sources
-        
-        brave_url = "https://api.search.brave.com/res/v1/web/search"
-        params = {
-            'q': query,
-            'count': 5
-        }
-        
-        response = requests.get(brave_url, params=params, timeout=10)
-        
-        if response.status_code == 200:
-            data = response.json()
-            results = []
-            sources = []
-            
-            if 'web' in data and 'results' in data['web']:
-                for item in data['web']['results'][:5]:
+        wiki_response = requests.get(wiki_url, params=wiki_params, timeout=10)
+        if wiki_response.status_code == 200:
+            wiki_data = wiki_response.json()
+            if 'query' in wiki_data and 'search' in wiki_data['query']:
+                for item in wiki_data['query']['search']:
                     title = item.get('title', '')
-                    description = item.get('description', '')
-                    url = item.get('url', '')
+                    snippet = item.get('snippet', '').replace('<span class="searchmatch">', '').replace('</span>', '')
                     
-                    results.append(f"• **{title}**\n  {description}")
+                    if title and snippet:
+                        results.append(f"• **{title}**\n  {snippet}")
+                        sources.append({
+                            'title': title,
+                            'url': f"https://ar.wikipedia.org/wiki/{title.replace(' ', '_')}"
+                        })
+        
+        # طريقة 2: DuckDuckGo Instant Answer API
+        ddg_url = "https://api.duckduckgo.com/"
+        ddg_params = {
+            'q': query,
+            'format': 'json',
+            'no_html': 1,
+            'skip_disambig': 1
+        }
+        
+        ddg_response = requests.get(ddg_url, params=ddg_params, timeout=10)
+        if ddg_response.status_code == 200:
+            ddg_data = ddg_response.json()
+            
+            if ddg_data.get('AbstractText'):
+                results.append(f"• **{ddg_data.get('Heading', 'معلومة')}**\n  {ddg_data['AbstractText']}")
+                if ddg_data.get('AbstractURL'):
                     sources.append({
-                        'title': title[:50] + '...' if len(title) > 50 else title,
-                        'url': url
+                        'title': ddg_data.get('Heading', 'معلومة'),
+                        'url': ddg_data['AbstractURL']
                     })
             
-            if results:
-                return '\n\n'.join(results), sources
+            for topic in ddg_data.get('RelatedTopics', [])[:3]:
+                if isinstance(topic, dict) and 'Text' in topic:
+                    text = topic.get('Text', '')
+                    url = topic.get('FirstURL', '')
+                    if text:
+                        results.append(f"• {text}")
+                        if url:
+                            sources.append({
+                                'title': text[:50],
+                                'url': url
+                            })
+        
+        # طريقة 3: محاولة جلب أخبار من مصادر عربية
+        try:
+            news_query = quote(query)
+            news_url = f"https://www.aljazeera.net/search/{news_query}"
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+            
+            # إضافة مصدر الجزيرة للبحث
+            sources.append({
+                'title': f'بحث في الجزيرة نت عن: {query}',
+                'url': news_url
+            })
+        except:
+            pass
+        
+        if results:
+            return '\n\n'.join(results), sources
         
         return None, []
         
     except Exception as e:
         print(f"خطأ في البحث: {str(e)}")
         return None, []
-
+def search_web_advanced(query):
 def call_groq_with_search(user_message):
     """استدعاء Groq مع البحث في الويب"""
     api_key = os.environ.get('GROQ_API_KEY', '')
