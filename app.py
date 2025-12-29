@@ -7,7 +7,7 @@ import json
 from urllib.parse import quote
 
 load_dotenv()
-app = Flask(__name__, static_folder='static')
+app = Flask(__name__)
 
 # HTML Template مخصص
 HTML_TEMPLATE = '''
@@ -447,9 +447,6 @@ HTML_TEMPLATE = '''
         
         .input-container {
             padding: 20px 24px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
             transition: all 0.3s ease;
         }
         
@@ -463,7 +460,7 @@ HTML_TEMPLATE = '''
             background: #18181B;
         }
         
-        .buttons-row {
+        .input-wrapper {
             display: flex;
             gap: 12px;
             align-items: center;
@@ -514,7 +511,6 @@ HTML_TEMPLATE = '''
         }
         
         .send-button, .clear-button {
-            flex: 1;
             padding: 16px 28px;
             border-radius: 16px;
             border: none;
@@ -523,7 +519,6 @@ HTML_TEMPLATE = '''
             transition: all 0.3s;
             font-size: 15px;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            min-width: 120px;
         }
         
         .light-mode .send-button {
@@ -736,27 +731,18 @@ HTML_TEMPLATE = '''
         }
         
         @media (max-width: 768px) {
-            .chat-container { padding: 10px; }
-            .header { padding: 14px; margin-bottom: 12px; border-radius: 16px; }
-            .header-content { flex-direction: column; gap: 12px; }
-            .header-left { flex-direction: row; gap: 12px; width: 100%; align-items: center; }
-            .icon-container { padding: 8px; border-radius: 10px; }
-            .logo-img { width: 45px; height: 45px; }
-            .title { font-size: 20px; }
-            .subtitle { font-size: 11px; }
-            .badges { display: flex; justify-content: flex-end; align-items: center; width: 100%; gap: 8px; }
-            .new-chat-button { padding: 8px 14px; font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 5px; background: white; color: #B90000; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); white-space: nowrap; }
-            .theme-toggle { padding: 8px; font-size: 18px; min-width: 44px; min-height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
-            .messages { padding: 12px; }
-            .message { margin-bottom: 10px; }
-            .message-icon { width: 32px; height: 32px; font-size: 16px; min-width: 32px; }
-            .message-content { max-width: 80%; padding: 10px 14px; font-size: 13px; line-height: 1.5; }
-            .quick-questions { grid-template-columns: 1fr; gap: 8px; padding: 12px; }
-            .quick-question { padding: 10px 14px; font-size: 13px; border-radius: 10px; }
-            .input-container { padding: 12px; gap: 10px; border-radius: 16px; flex-direction: column; }
-            #messageInput { padding: 12px 16px; font-size: 15px; border-radius: 12px; width: 100%; }
-            .buttons-row { display: flex; gap: 10px; width: 100%; }
-            .send-button, .clear-button { flex: 1; padding: 14px 20px; font-size: 15px; border-radius: 12px; font-weight: 600; min-height: 48px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
+            .header-content {
+                flex-direction: column;
+                gap: 16px;
+            }
+            
+            .message-content {
+                max-width: 85%;
+            }
+            
+            .quick-questions {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -825,14 +811,14 @@ HTML_TEMPLATE = '''
             </div>
             
             <div class="input-container">
-                <input 
-                    type="text" 
-                    id="messageInput" 
-                    class="input-field" 
-                    placeholder="اسأل عن أي شيء ..."
-                    onkeypress="handleKeyPress(event)"
-                >
-                <div class="buttons-row">
+                <div class="input-wrapper">
+                    <input 
+                        type="text" 
+                        id="messageInput" 
+                        class="input-field" 
+                        placeholder="اسأل عن أي شيء ..."
+                        onkeypress="handleKeyPress(event)"
+                    >
                     <button class="send-button" onclick="sendMessage()" id="sendButton">
                         إرسال
                     </button>
@@ -1022,43 +1008,66 @@ HTML_TEMPLATE = '''
 '''
 
 def search_web_advanced(query):
-    """بحث متقدم باستخدام Google Custom Search"""
+    """بحث متقدم باستخدام DuckDuckGo و SerpAPI"""
     try:
-        # Google Custom Search API (أفضل من DuckDuckGo HTML على Render)
-        google_api_key = "AIzaSyBDsNM2hKLZKkSH-SDlAaSzsJQ_h19_hnQ"
-        google_cx = "57c41c2e1c71d430a"
-        
-        search_url = "https://www.googleapis.com/customsearch/v1"
-        params = {
-            'key': google_api_key,
-            'cx': google_cx,
-            'q': query,
-            'num': 5,
-            'lr': 'lang_ar'
+        search_url = f"https://html.duckduckgo.com/html/?q={quote(query)}"
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         }
         
-        response = requests.get(search_url, params=params, timeout=15)
+        response = requests.get(search_url, headers=headers, timeout=10)
+        
+        if response.status_code == 200:
+            from bs4 import BeautifulSoup
+            soup = BeautifulSoup(response.text, 'html.parser')
+            results = []
+            sources = []
+            
+            for result in soup.find_all('div', class_='result', limit=5):
+                title_tag = result.find('a', class_='result__a')
+                snippet_tag = result.find('a', class_='result__snippet')
+                
+                if title_tag and snippet_tag:
+                    title = title_tag.get_text(strip=True)
+                    snippet = snippet_tag.get_text(strip=True)
+                    url = title_tag.get('href', '')
+                    
+                    results.append(f"• **{title}**\n  {snippet}")
+                    sources.append({
+                        'title': title[:50] + '...' if len(title) > 50 else title,
+                        'url': url
+                    })
+            
+            if results:
+                return '\n\n'.join(results), sources
+        
+        brave_url = "https://api.search.brave.com/res/v1/web/search"
+        params = {
+            'q': query,
+            'count': 5
+        }
+        
+        response = requests.get(brave_url, params=params, timeout=10)
         
         if response.status_code == 200:
             data = response.json()
             results = []
             sources = []
             
-            if 'items' in data:
-                for item in data['items']:
+            if 'web' in data and 'results' in data['web']:
+                for item in data['web']['results'][:5]:
                     title = item.get('title', '')
-                    snippet = item.get('snippet', '')
-                    url = item.get('link', '')
+                    description = item.get('description', '')
+                    url = item.get('url', '')
                     
-                    if title and snippet:
-                        results.append(f"• **{title}**\n  {snippet}")
-                        sources.append({
-                            'title': title[:50] + '...' if len(title) > 50 else title,
-                            'url': url
-                        })
-                
-                if results:
-                    return '\n\n'.join(results), sources
+                    results.append(f"• **{title}**\n  {description}")
+                    sources.append({
+                        'title': title[:50] + '...' if len(title) > 50 else title,
+                        'url': url
+                    })
+            
+            if results:
+                return '\n\n'.join(results), sources
         
         return None, []
         
