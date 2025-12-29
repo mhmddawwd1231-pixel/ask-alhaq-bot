@@ -1112,7 +1112,7 @@ def search_web_advanced(query):
     except Exception as e:
         print(f"خطأ في البحث: {str(e)}")
         return None, []
-def search_web_advanced(query):
+
 def call_groq_with_search(user_message):
     """استدعاء Groq مع البحث في الويب"""
     api_key = os.environ.get('GROQ_API_KEY', '')
