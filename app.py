@@ -736,146 +736,27 @@ HTML_TEMPLATE = '''
         }
         
         @media (max-width: 768px) {
-            .chat-container {
-                padding: 10px;
-            }
-            
-            .header {
-                padding: 14px;
-                margin-bottom: 12px;
-                border-radius: 16px;
-            }
-            
-            .header-content {
-                flex-direction: column;
-                gap: 12px;
-            }
-            
-            .header-left {
-                flex-direction: row;
-                gap: 12px;
-                width: 100%;
-                align-items: center;
-            }
-            
-            .icon-container {
-                padding: 8px;
-                border-radius: 10px;
-            }
-            
-            .logo-img {
-                width: 45px;
-                height: 45px;
-            }
-            
-            .title {
-                font-size: 20px;
-            }
-            
-            .subtitle {
-                font-size: 11px;
-            }
-            
-            .badges {
-                display: flex;
-                justify-content: flex-end;
-                align-items: center;
-                width: 100%;
-                gap: 8px;
-            }
-            
-            .new-chat-button {
-                padding: 8px 14px;
-                font-size: 13px;
-                font-weight: 600;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 5px;
-                background: white;
-                color: #B90000;
-                border-radius: 10px;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-                white-space: nowrap;
-            }
-            
-            .theme-toggle {
-                padding: 8px;
-                font-size: 18px;
-                min-width: 44px;
-                min-height: 44px;
-                border-radius: 10px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-            
-            .messages {
-                padding: 12px;
-            }
-            
-            .message {
-                margin-bottom: 10px;
-            }
-            
-            .message-icon {
-                width: 32px;
-                height: 32px;
-                font-size: 16px;
-                min-width: 32px;
-            }
-            
-            .message-content {
-                max-width: 80%;
-                padding: 10px 14px;
-                font-size: 13px;
-                line-height: 1.5;
-            }
-            
-            .quick-questions {
-                grid-template-columns: 1fr;
-                gap: 8px;
-                padding: 12px;
-            }
-            
-            .quick-question {
-                padding: 10px 14px;
-                font-size: 13px;
-                border-radius: 10px;
-            }
-            
-            .input-container {
-                padding: 12px;
-                gap: 10px;
-                border-radius: 16px;
-                flex-direction: column;
-            }
-            
-            #messageInput {
-                padding: 12px 16px;
-                font-size: 15px;
-                border-radius: 12px;
-                width: 100%;
-            }
-            
-            .buttons-row {
-                display: flex;
-                gap: 10px;
-                width: 100%;
-            }
-            
-            .send-button, .clear-button {
-                flex: 1;
-                padding: 14px 20px;
-                font-size: 15px;
-                border-radius: 12px;
-                font-weight: 600;
-                min-height: 48px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                box-sizing: border-box;
-            }
+            .chat-container { padding: 10px; }
+            .header { padding: 14px; margin-bottom: 12px; border-radius: 16px; }
+            .header-content { flex-direction: column; gap: 12px; }
+            .header-left { flex-direction: row; gap: 12px; width: 100%; align-items: center; }
+            .icon-container { padding: 8px; border-radius: 10px; }
+            .logo-img { width: 45px; height: 45px; }
+            .title { font-size: 20px; }
+            .subtitle { font-size: 11px; }
+            .badges { display: flex; justify-content: flex-end; align-items: center; width: 100%; gap: 8px; }
+            .new-chat-button { padding: 8px 14px; font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 5px; background: white; color: #B90000; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); white-space: nowrap; }
+            .theme-toggle { padding: 8px; font-size: 18px; min-width: 44px; min-height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+            .messages { padding: 12px; }
+            .message { margin-bottom: 10px; }
+            .message-icon { width: 32px; height: 32px; font-size: 16px; min-width: 32px; }
+            .message-content { max-width: 80%; padding: 10px 14px; font-size: 13px; line-height: 1.5; }
+            .quick-questions { grid-template-columns: 1fr; gap: 8px; padding: 12px; }
+            .quick-question { padding: 10px 14px; font-size: 13px; border-radius: 10px; }
+            .input-container { padding: 12px; gap: 10px; border-radius: 16px; flex-direction: column; }
+            #messageInput { padding: 12px 16px; font-size: 15px; border-radius: 12px; width: 100%; }
+            .buttons-row { display: flex; gap: 10px; width: 100%; }
+            .send-button, .clear-button { flex: 1; padding: 14px 20px; font-size: 15px; border-radius: 12px; font-weight: 600; min-height: 48px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
         }
     </style>
 </head>
@@ -1141,25 +1022,22 @@ HTML_TEMPLATE = '''
 '''
 
 def search_web_advanced(query):
-    """بحث متقدم باستخدام Google Custom Search و DuckDuckGo"""
+    """بحث متقدم باستخدام Google Custom Search"""
     try:
-        # محاولة 1: Google Custom Search API (الأفضل للنتائج الحديثة)
+        # Google Custom Search API (أفضل من DuckDuckGo HTML على Render)
         google_api_key = "AIzaSyBDsNM2hKLZKkSH-SDlAaSzsJQ_h19_hnQ"
         google_cx = "57c41c2e1c71d430a"
         
-        print(f"🔎 محاولة Google Search عن: {query}")
         search_url = "https://www.googleapis.com/customsearch/v1"
         params = {
             'key': google_api_key,
             'cx': google_cx,
             'q': query,
             'num': 5,
-            'lr': 'lang_ar',
-            'dateRestrict': 'm6'  # آخر 6 شهور
+            'lr': 'lang_ar'
         }
         
         response = requests.get(search_url, params=params, timeout=15)
-        print(f"📡 Google Search status: {response.status_code}")
         
         if response.status_code == 200:
             data = response.json()
@@ -1180,61 +1058,14 @@ def search_web_advanced(query):
                         })
                 
                 if results:
-                    print(f"✅ Google: وجدت {len(results)} نتائج حديثة")
                     return '\n\n'.join(results), sources
         
-        # محاولة 2: DuckDuckGo Instant Answer API
-        print("🔄 محاولة DuckDuckGo API...")
-        ddg_url = "https://api.duckduckgo.com/"
-        params = {
-            'q': query,
-            'format': 'json',
-            'no_html': 1,
-            'skip_disambig': 1
-        }
-        
-        response = requests.get(ddg_url, params=params, timeout=15)
-        
-        if response.status_code == 200:
-            data = response.json()
-            results = []
-            sources = []
-            
-            if data.get('AbstractText'):
-                results.append(f"• **{data.get('Heading', 'معلومة')}**\n  {data['AbstractText']}")
-                if data.get('AbstractURL'):
-                    sources.append({
-                        'title': data.get('Heading', 'معلومة')[:50],
-                        'url': data['AbstractURL']
-                    })
-            
-            for topic in data.get('RelatedTopics', [])[:5]:
-                if isinstance(topic, dict) and 'Text' in topic:
-                    text = topic.get('Text', '')
-                    url = topic.get('FirstURL', '')
-                    if text:
-                        parts = text.split(' - ', 1)
-                        if len(parts) == 2:
-                            results.append(f"• **{parts[0]}**\n  {parts[1]}")
-                        else:
-                            results.append(f"• {text}")
-                        if url:
-                            sources.append({
-                                'title': parts[0][:50] if len(parts) == 2 else text[:50],
-                                'url': url
-                            })
-            
-            if results:
-                print(f"✅ DuckDuckGo: وجدت {len(results)} نتائج")
-                return '\n\n'.join(results), sources
-        
-        print("⚠️ لم يتم العثور على نتائج من أي محرك بحث")
         return None, []
         
     except Exception as e:
-        print(f"❌ خطأ في البحث: {str(e)}")
+        print(f"خطأ في البحث: {str(e)}")
         return None, []
-def search_web_advanced(query):
+
 def call_groq_with_search(user_message):
     """استدعاء Groq مع البحث في الويب"""
     api_key = os.environ.get('GROQ_API_KEY', '')
