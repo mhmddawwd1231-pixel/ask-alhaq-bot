@@ -810,10 +810,6 @@ HTML_TEMPLATE = '''
                 justify-content: center;
             }
             
-            .messages-container {
-                border-radius: 12px;
-            }
-            
             .messages {
                 padding: 12px;
             }
@@ -879,16 +875,6 @@ HTML_TEMPLATE = '''
                 align-items: center;
                 justify-content: center;
                 box-sizing: border-box;
-            }
-            
-            .clear-button {
-                padding: 12px 18px;
-            }
-            
-
-            .loading-dots span {
-                width: 6px;
-                height: 6px;
             }
         }
     </style>
@@ -1155,48 +1141,14 @@ HTML_TEMPLATE = '''
 '''
 
 def search_web_advanced(query):
-    """بحث متقدم باستخدام DuckDuckGo"""
+    """بحث متقدم باستخدام DuckDuckGo و SerpAPI"""
     try:
-        # محاولة 1: DuckDuckGo Lite HTML (أسرع وأخف)
-        search_url = f"https://lite.duckduckgo.com/lite/?q={quote(query)}"
+        search_url = f"https://html.duckduckgo.com/html/?q={quote(query)}"
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         }
         
-        response = requests.get(search_url, headers=headers, timeout=15)
-        
-        if response.status_code == 200:
-            from bs4 import BeautifulSoup
-            soup = BeautifulSoup(response.text, 'html.parser')
-            results = []
-            sources = []
-            
-            # استخراج النتائج من DuckDuckGo Lite
-            for idx, row in enumerate(soup.find_all('tr')[1:6]):  # أول 5 نتائج
-                links = row.find_all('a')
-                if len(links) >= 2:
-                    title_link = links[1]
-                    title = title_link.get_text(strip=True)
-                    url = title_link.get('href', '')
-                    
-                    # استخراج الوصف
-                    snippet_td = row.find_all('td', class_='result-snippet')
-                    snippet = snippet_td[0].get_text(strip=True) if snippet_td else ''
-                    
-                    if title and snippet:
-                        results.append(f"• **{title}**\n  {snippet}")
-                        sources.append({
-                            'title': title[:50] + '...' if len(title) > 50 else title,
-                            'url': url
-                        })
-            
-            if results:
-                return '\n\n'.join(results), sources
-        
-        # محاولة 2: DuckDuckGo HTML القديم
-        search_url = f"https://html.duckduckgo.com/html/?q={quote(query)}"
-        
-        response = requests.get(search_url, headers=headers, timeout=15)
+        response = requests.get(search_url, headers=headers, timeout=10)
         
         if response.status_code == 200:
             from bs4 import BeautifulSoup
@@ -1222,58 +1174,40 @@ def search_web_advanced(query):
             if results:
                 return '\n\n'.join(results), sources
         
-        # محاولة 3: DuckDuckGo Instant Answer API
-        ddg_url = "https://api.duckduckgo.com/"
+        brave_url = "https://api.search.brave.com/res/v1/web/search"
         params = {
             'q': query,
-            'format': 'json',
-            'no_html': 1,
-            'skip_disambig': 1
+            'count': 5
         }
         
-        response = requests.get(ddg_url, params=params, timeout=15)
+        response = requests.get(brave_url, params=params, timeout=10)
         
         if response.status_code == 200:
             data = response.json()
             results = []
             sources = []
             
-            # استخراج الإجابة المباشرة
-            if data.get('AbstractText'):
-                results.append(f"• **{data.get('Heading', 'معلومة')}**\n  {data['AbstractText']}")
-                if data.get('AbstractURL'):
+            if 'web' in data and 'results' in data['web']:
+                for item in data['web']['results'][:5]:
+                    title = item.get('title', '')
+                    description = item.get('description', '')
+                    url = item.get('url', '')
+                    
+                    results.append(f"• **{title}**\n  {description}")
                     sources.append({
-                        'title': data.get('Heading', 'معلومة')[:50],
-                        'url': data['AbstractURL']
+                        'title': title[:50] + '...' if len(title) > 50 else title,
+                        'url': url
                     })
-            
-            # استخراج المواضيع المرتبطة
-            for topic in data.get('RelatedTopics', [])[:5]:
-                if isinstance(topic, dict) and 'Text' in topic:
-                    text = topic.get('Text', '')
-                    url = topic.get('FirstURL', '')
-                    if text:
-                        parts = text.split(' - ', 1)
-                        if len(parts) == 2:
-                            results.append(f"• **{parts[0]}**\n  {parts[1]}")
-                        else:
-                            results.append(f"• {text}")
-                        if url:
-                            sources.append({
-                                'title': parts[0][:50] if len(parts) == 2 else text[:50],
-                                'url': url
-                            })
             
             if results:
                 return '\n\n'.join(results), sources
         
-        # إذا فشلت كل المحاولات
-        return "عذراً، لم أتمكن من البحث في الوقت الحالي. يرجى المحاولة مرة أخرى.", []
+        return None, []
         
     except Exception as e:
         print(f"خطأ في البحث: {str(e)}")
-        return f"عذراً، حدث خطأ في البحث: {str(e)}", []
-def search_web_advanced(query):
+        return None, []
+
 def call_groq_with_search(user_message):
     """استدعاء Groq مع البحث في الويب"""
     api_key = os.environ.get('GROQ_API_KEY', '')
