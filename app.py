@@ -447,6 +447,9 @@ HTML_TEMPLATE = '''
         
         .input-container {
             padding: 20px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
             transition: all 0.3s ease;
         }
         
@@ -460,7 +463,7 @@ HTML_TEMPLATE = '''
             background: #18181B;
         }
         
-        .input-wrapper {
+        .buttons-row {
             display: flex;
             gap: 12px;
             align-items: center;
@@ -511,6 +514,7 @@ HTML_TEMPLATE = '''
         }
         
         .send-button, .clear-button {
+            flex: 1;
             padding: 16px 28px;
             border-radius: 16px;
             border: none;
@@ -519,6 +523,7 @@ HTML_TEMPLATE = '''
             transition: all 0.3s;
             font-size: 15px;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-width: 120px;
         }
         
         .light-mode .send-button {
@@ -839,54 +844,38 @@ HTML_TEMPLATE = '''
             }
             
             .input-container {
-                padding: 10px;
-                gap: 8px;
-                border-radius: 12px;
-                flex-wrap: wrap;
-            }
-            
-            .input-wrapper {
-                display: flex;
-                gap: 8px;
-                width: 100%;
+                padding: 12px;
+                gap: 10px;
+                border-radius: 16px;
+                flex-direction: column;
             }
             
             #messageInput {
-                padding: 10px 14px;
-                font-size: 14px;
-                border-radius: 10px;
+                padding: 12px 16px;
+                font-size: 15px;
+                border-radius: 12px;
+                width: 100%;
+            }
+            
+            .buttons-row {
+                display: flex;
+                gap: 10px;
+                width: 100%;
             }
             
             .send-button, .clear-button {
-                padding: 12px 18px;
-                font-size: 14px;
+                flex: 1;
+                padding: 14px 20px;
+                font-size: 15px;
                 border-radius: 12px;
                 font-weight: 600;
-                white-space: nowrap;
-                min-height: 44px;
+                min-height: 48px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
             }
             
-            .clear-button {
-                flex: 1;
-                min-width: 80px;
-            }
-            
-            .send-button {
-                flex: 1;
-                min-width: 80px;
-            }
-            
-            #sendButton {
-                width: 40px;
-                height: 40px;
-                font-size: 18px;
-                border-radius: 10px;
-                min-width: 40px;
-            }
-            
+
             .loading-dots span {
                 width: 6px;
                 height: 6px;
@@ -959,14 +948,14 @@ HTML_TEMPLATE = '''
             </div>
             
             <div class="input-container">
-                <div class="input-wrapper">
-                    <input 
-                        type="text" 
-                        id="messageInput" 
-                        class="input-field" 
-                        placeholder="اسأل عن أي شيء ..."
-                        onkeypress="handleKeyPress(event)"
-                    >
+                <input 
+                    type="text" 
+                    id="messageInput" 
+                    class="input-field" 
+                    placeholder="اسأل عن أي شيء ..."
+                    onkeypress="handleKeyPress(event)"
+                >
+                <div class="buttons-row">
                     <button class="send-button" onclick="sendMessage()" id="sendButton">
                         إرسال
                     </button>
