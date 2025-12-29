@@ -1141,73 +1141,100 @@ HTML_TEMPLATE = '''
 '''
 
 def search_web_advanced(query):
-    """بحث متقدم باستخدام DuckDuckGo و SerpAPI"""
+    """بحث متقدم باستخدام Google Custom Search و DuckDuckGo"""
     try:
-        search_url = f"https://html.duckduckgo.com/html/?q={quote(query)}"
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
+        # محاولة 1: Google Custom Search API (الأفضل للنتائج الحديثة)
+        google_api_key = "AIzaSyBDsNM2hKLZKkSH-SDlAaSzsJQ_h19_hnQ"
+        google_cx = "57c41c2e1c71d430a"
         
-        response = requests.get(search_url, headers=headers, timeout=10)
-        
-        if response.status_code == 200:
-            from bs4 import BeautifulSoup
-            soup = BeautifulSoup(response.text, 'html.parser')
-            results = []
-            sources = []
-            
-            for result in soup.find_all('div', class_='result', limit=5):
-                title_tag = result.find('a', class_='result__a')
-                snippet_tag = result.find('a', class_='result__snippet')
-                
-                if title_tag and snippet_tag:
-                    title = title_tag.get_text(strip=True)
-                    snippet = snippet_tag.get_text(strip=True)
-                    url = title_tag.get('href', '')
-                    
-                    results.append(f"• **{title}**\n  {snippet}")
-                    sources.append({
-                        'title': title[:50] + '...' if len(title) > 50 else title,
-                        'url': url
-                    })
-            
-            if results:
-                return '\n\n'.join(results), sources
-        
-        brave_url = "https://api.search.brave.com/res/v1/web/search"
+        print(f"🔎 محاولة Google Search عن: {query}")
+        search_url = "https://www.googleapis.com/customsearch/v1"
         params = {
+            'key': google_api_key,
+            'cx': google_cx,
             'q': query,
-            'count': 5
+            'num': 5,
+            'lr': 'lang_ar',
+            'dateRestrict': 'm6'  # آخر 6 شهور
         }
         
-        response = requests.get(brave_url, params=params, timeout=10)
+        response = requests.get(search_url, params=params, timeout=15)
+        print(f"📡 Google Search status: {response.status_code}")
         
         if response.status_code == 200:
             data = response.json()
             results = []
             sources = []
             
-            if 'web' in data and 'results' in data['web']:
-                for item in data['web']['results'][:5]:
+            if 'items' in data:
+                for item in data['items']:
                     title = item.get('title', '')
-                    description = item.get('description', '')
-                    url = item.get('url', '')
+                    snippet = item.get('snippet', '')
+                    url = item.get('link', '')
                     
-                    results.append(f"• **{title}**\n  {description}")
+                    if title and snippet:
+                        results.append(f"• **{title}**\n  {snippet}")
+                        sources.append({
+                            'title': title[:50] + '...' if len(title) > 50 else title,
+                            'url': url
+                        })
+                
+                if results:
+                    print(f"✅ Google: وجدت {len(results)} نتائج حديثة")
+                    return '\n\n'.join(results), sources
+        
+        # محاولة 2: DuckDuckGo Instant Answer API
+        print("🔄 محاولة DuckDuckGo API...")
+        ddg_url = "https://api.duckduckgo.com/"
+        params = {
+            'q': query,
+            'format': 'json',
+            'no_html': 1,
+            'skip_disambig': 1
+        }
+        
+        response = requests.get(ddg_url, params=params, timeout=15)
+        
+        if response.status_code == 200:
+            data = response.json()
+            results = []
+            sources = []
+            
+            if data.get('AbstractText'):
+                results.append(f"• **{data.get('Heading', 'معلومة')}**\n  {data['AbstractText']}")
+                if data.get('AbstractURL'):
                     sources.append({
-                        'title': title[:50] + '...' if len(title) > 50 else title,
-                        'url': url
+                        'title': data.get('Heading', 'معلومة')[:50],
+                        'url': data['AbstractURL']
                     })
             
+            for topic in data.get('RelatedTopics', [])[:5]:
+                if isinstance(topic, dict) and 'Text' in topic:
+                    text = topic.get('Text', '')
+                    url = topic.get('FirstURL', '')
+                    if text:
+                        parts = text.split(' - ', 1)
+                        if len(parts) == 2:
+                            results.append(f"• **{parts[0]}**\n  {parts[1]}")
+                        else:
+                            results.append(f"• {text}")
+                        if url:
+                            sources.append({
+                                'title': parts[0][:50] if len(parts) == 2 else text[:50],
+                                'url': url
+                            })
+            
             if results:
+                print(f"✅ DuckDuckGo: وجدت {len(results)} نتائج")
                 return '\n\n'.join(results), sources
         
+        print("⚠️ لم يتم العثور على نتائج من أي محرك بحث")
         return None, []
         
     except Exception as e:
-        print(f"خطأ في البحث: {str(e)}")
+        print(f"❌ خطأ في البحث: {str(e)}")
         return None, []
-
+def search_web_advanced(query):
 def call_groq_with_search(user_message):
     """استدعاء Groq مع البحث في الويب"""
     api_key = os.environ.get('GROQ_API_KEY', '')
