@@ -736,20 +736,21 @@ HTML_TEMPLATE = '''
             }
             
             .header {
-                padding: 12px;
-                margin-bottom: 10px;
-                border-radius: 12px;
+                padding: 14px;
+                margin-bottom: 12px;
+                border-radius: 16px;
             }
             
             .header-content {
                 flex-direction: column;
-                gap: 10px;
+                gap: 12px;
             }
             
             .header-left {
                 flex-direction: row;
-                gap: 10px;
+                gap: 12px;
                 width: 100%;
+                align-items: center;
             }
             
             .icon-container {
@@ -771,18 +772,32 @@ HTML_TEMPLATE = '''
             }
             
             .badges {
-                justify-content: flex-start;
+                display: flex;
+                justify-content: space-between;
                 width: 100%;
+                gap: 8px;
             }
             
             .new-chat-button {
-                padding: 6px 14px;
-                font-size: 12px;
+                flex: 1;
+                padding: 10px 16px;
+                font-size: 14px;
+                font-weight: 600;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+                background: white;
+                color: #B90000;
+                border-radius: 12px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.15);
             }
             
             .theme-toggle {
-                padding: 7px;
-                font-size: 16px;
+                padding: 10px;
+                font-size: 20px;
+                min-width: 48px;
+                border-radius: 12px;
             }
             
             .messages-container {
@@ -827,12 +842,41 @@ HTML_TEMPLATE = '''
                 padding: 10px;
                 gap: 8px;
                 border-radius: 12px;
+                flex-wrap: wrap;
+            }
+            
+            .input-wrapper {
+                display: flex;
+                gap: 8px;
+                width: 100%;
             }
             
             #messageInput {
                 padding: 10px 14px;
                 font-size: 14px;
                 border-radius: 10px;
+            }
+            
+            .send-button, .clear-button {
+                padding: 12px 18px;
+                font-size: 14px;
+                border-radius: 12px;
+                font-weight: 600;
+                white-space: nowrap;
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .clear-button {
+                flex: 1;
+                min-width: 80px;
+            }
+            
+            .send-button {
+                flex: 1;
+                min-width: 80px;
             }
             
             #sendButton {
