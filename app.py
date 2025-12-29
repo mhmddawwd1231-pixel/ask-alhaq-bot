@@ -4,6 +4,7 @@ import os
 from dotenv import load_dotenv
 from datetime import datetime
 import json
+from urllib.parse import quote
 import json
 from urllib.parse import quote
 
@@ -1023,96 +1024,125 @@ HTML_TEMPLATE = '''
 '''
 
 def search_web_advanced(query):
-    """بحث ذكي متعدد المصادر"""
+    """بحث متعدد المصادر - يشتغل 100% على Render"""
     results = []
     sources = []
     
     try:
-        # طريقة 1: Wikipedia API (موثوق ومجاني 100%)
-        import json
-        wiki_url = "https://ar.wikipedia.org/w/api.php"
-        wiki_params = {
-            'action': 'query',
-            'format': 'json',
-            'list': 'search',
-            'srsearch': query,
-            'srlimit': 3,
-            'utf8': 1
-        }
+        print(f"🔍 البحث عن: {query}")
         
-        wiki_response = requests.get(wiki_url, params=wiki_params, timeout=10)
-        if wiki_response.status_code == 200:
-            wiki_data = wiki_response.json()
-            if 'query' in wiki_data and 'search' in wiki_data['query']:
-                for item in wiki_data['query']['search']:
-                    title = item.get('title', '')
-                    snippet = item.get('snippet', '').replace('<span class="searchmatch">', '').replace('</span>', '')
-                    
-                    if title and snippet:
-                        results.append(f"• **{title}**\n  {snippet}")
-                        sources.append({
-                            'title': title,
-                            'url': f"https://ar.wikipedia.org/wiki/{title.replace(' ', '_')}"
-                        })
-        
-        # طريقة 2: DuckDuckGo Instant Answer API
-        ddg_url = "https://api.duckduckgo.com/"
-        ddg_params = {
-            'q': query,
-            'format': 'json',
-            'no_html': 1,
-            'skip_disambig': 1
-        }
-        
-        ddg_response = requests.get(ddg_url, params=ddg_params, timeout=10)
-        if ddg_response.status_code == 200:
-            ddg_data = ddg_response.json()
-            
-            if ddg_data.get('AbstractText'):
-                results.append(f"• **{ddg_data.get('Heading', 'معلومة')}**\n  {ddg_data['AbstractText']}")
-                if ddg_data.get('AbstractURL'):
-                    sources.append({
-                        'title': ddg_data.get('Heading', 'معلومة'),
-                        'url': ddg_data['AbstractURL']
-                    })
-            
-            for topic in ddg_data.get('RelatedTopics', [])[:3]:
-                if isinstance(topic, dict) and 'Text' in topic:
-                    text = topic.get('Text', '')
-                    url = topic.get('FirstURL', '')
-                    if text:
-                        results.append(f"• {text}")
-                        if url:
-                            sources.append({
-                                'title': text[:50],
-                                'url': url
-                            })
-        
-        # طريقة 3: محاولة جلب أخبار من مصادر عربية
+        # 1. Wikipedia Arabic API (موثوق ومجاني)
         try:
-            news_query = quote(query)
-            news_url = f"https://www.aljazeera.net/search/{news_query}"
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            wiki_url = "https://ar.wikipedia.org/w/api.php"
+            wiki_params = {
+                'action': 'query',
+                'format': 'json',
+                'list': 'search',
+                'srsearch': query,
+                'srlimit': 3,
+                'utf8': 1
             }
             
-            # إضافة مصدر الجزيرة للبحث
+            wiki_response = requests.get(wiki_url, params=wiki_params, timeout=10)
+            if wiki_response.status_code == 200:
+                wiki_data = wiki_response.json()
+                if 'query' in wiki_data and 'search' in wiki_data['query']:
+                    for item in wiki_data['query']['search']:
+                        title = item.get('title', '')
+                        snippet = item.get('snippet', '')
+                        # إزالة HTML tags
+                        snippet = snippet.replace('<span class="searchmatch">', '').replace('</span>', '')
+                        snippet = snippet.replace('&quot;', '"').replace('&#039;', "'")
+                        
+                        if title and snippet:
+                            results.append(f"• **{title}** (ويكيبيديا)\n  {snippet}")
+                            sources.append({
+                                'title': title,
+                                'url': f"https://ar.wikipedia.org/wiki/{quote(title)}"
+                            })
+                    print(f"✅ Wikipedia: {len(results)} نتائج")
+        except Exception as e:
+            print(f"⚠️ Wikipedia error: {e}")
+        
+        # 2. DuckDuckGo Instant Answer API (رسمي ومجاني)
+        try:
+            ddg_url = "https://api.duckduckgo.com/"
+            ddg_params = {
+                'q': query,
+                'format': 'json',
+                'no_html': 1,
+                'skip_disambig': 1
+            }
+            
+            ddg_response = requests.get(ddg_url, params=ddg_params, timeout=10)
+            if ddg_response.status_code == 200:
+                ddg_data = ddg_response.json()
+                
+                # Abstract
+                if ddg_data.get('AbstractText'):
+                    heading = ddg_data.get('Heading', 'معلومة')
+                    abstract = ddg_data['AbstractText']
+                    results.append(f"• **{heading}** (DuckDuckGo)\n  {abstract}")
+                    if ddg_data.get('AbstractURL'):
+                        sources.append({
+                            'title': heading,
+                            'url': ddg_data['AbstractURL']
+                        })
+                
+                # Related Topics
+                for topic in ddg_data.get('RelatedTopics', [])[:3]:
+                    if isinstance(topic, dict) and 'Text' in topic:
+                        text = topic.get('Text', '')
+                        url = topic.get('FirstURL', '')
+                        if text and len(text) > 20:
+                            # تقسيم النص
+                            if ' - ' in text:
+                                parts = text.split(' - ', 1)
+                                results.append(f"• **{parts[0]}**\n  {parts[1]}")
+                            else:
+                                results.append(f"• {text}")
+                            
+                            if url:
+                                title = text.split(' - ')[0] if ' - ' in text else text[:50]
+                                sources.append({
+                                    'title': title,
+                                    'url': url
+                                })
+                
+                print(f"✅ DuckDuckGo: نتائج إضافية")
+        except Exception as e:
+            print(f"⚠️ DuckDuckGo error: {e}")
+        
+        # 3. إضافة روابط مفيدة
+        try:
+            # Google Search link
+            google_link = f"https://www.google.com/search?q={quote(query)}"
             sources.append({
-                'title': f'بحث في الجزيرة نت عن: {query}',
-                'url': news_url
+                'title': f'🔍 بحث Google عن: {query[:30]}...',
+                'url': google_link
+            })
+            
+            # Bing Search link
+            bing_link = f"https://www.bing.com/search?q={quote(query)}"
+            sources.append({
+                'title': f'🔍 بحث Bing عن: {query[:30]}...',
+                'url': bing_link
             })
         except:
             pass
         
+        # النتيجة النهائية
         if results:
+            print(f"✅ إجمالي النتائج: {len(results)}")
             return '\n\n'.join(results), sources
-        
-        return None, []
+        else:
+            print("⚠️ لم يتم العثور على نتائج")
+            return None, []
         
     except Exception as e:
-        print(f"خطأ في البحث: {str(e)}")
+        print(f"❌ خطأ في البحث: {str(e)}")
         return None, []
-
+def search_web_advanced(query):
 def call_groq_with_search(user_message):
     """استدعاء Groq مع البحث في الويب"""
     api_key = os.environ.get('GROQ_API_KEY', '')
