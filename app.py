@@ -731,17 +731,121 @@ HTML_TEMPLATE = '''
         }
         
         @media (max-width: 768px) {
+            .chat-container {
+                padding: 10px;
+            }
+            
+            .header {
+                padding: 12px;
+                margin-bottom: 10px;
+                border-radius: 12px;
+            }
+            
             .header-content {
                 flex-direction: column;
-                gap: 16px;
+                gap: 10px;
+            }
+            
+            .header-left {
+                flex-direction: row;
+                gap: 10px;
+                width: 100%;
+            }
+            
+            .icon-container {
+                padding: 8px;
+                border-radius: 10px;
+            }
+            
+            .logo-img {
+                width: 45px;
+                height: 45px;
+            }
+            
+            .title {
+                font-size: 20px;
+            }
+            
+            .subtitle {
+                font-size: 11px;
+            }
+            
+            .badges {
+                justify-content: flex-start;
+                width: 100%;
+            }
+            
+            .new-chat-button {
+                padding: 6px 14px;
+                font-size: 12px;
+            }
+            
+            .theme-toggle {
+                padding: 7px;
+                font-size: 16px;
+            }
+            
+            .messages-container {
+                border-radius: 12px;
+            }
+            
+            .messages {
+                padding: 12px;
+            }
+            
+            .message {
+                margin-bottom: 10px;
+            }
+            
+            .message-icon {
+                width: 32px;
+                height: 32px;
+                font-size: 16px;
+                min-width: 32px;
             }
             
             .message-content {
-                max-width: 85%;
+                max-width: 80%;
+                padding: 10px 14px;
+                font-size: 13px;
+                line-height: 1.5;
             }
             
             .quick-questions {
                 grid-template-columns: 1fr;
+                gap: 8px;
+                padding: 12px;
+            }
+            
+            .quick-question {
+                padding: 10px 14px;
+                font-size: 13px;
+                border-radius: 10px;
+            }
+            
+            .input-container {
+                padding: 10px;
+                gap: 8px;
+                border-radius: 12px;
+            }
+            
+            #messageInput {
+                padding: 10px 14px;
+                font-size: 14px;
+                border-radius: 10px;
+            }
+            
+            #sendButton {
+                width: 40px;
+                height: 40px;
+                font-size: 18px;
+                border-radius: 10px;
+                min-width: 40px;
+            }
+            
+            .loading-dots span {
+                width: 6px;
+                height: 6px;
             }
         }
     </style>
